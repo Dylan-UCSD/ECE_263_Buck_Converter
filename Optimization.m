@@ -9,21 +9,21 @@ VoltageRipple = 0.03;
 
 
 % Set Transistor Params
-UnitRon_n = 8.1;
-UnitCgg_n = 350*10^-15;
+UnitRon_n = 5.5;
+UnitCgg_n = 120*10^-15;
 UnitW_n = 200*10^-6;
 
-UnitRon_p = 30;
-UnitCgg_p = 0.2*10^-12;
+UnitRon_p = 17.2;
+UnitCgg_p = 79*10^-15;
 UnitW_p = 200*10^-6;
 
-L_n = 130*10^-9;
-L_p = 130*10^-9;
+L_n = 60*10^-9;
+L_p = 60*10^-9;
 
 PtoN_Width_Ratio = 1; % 1 for equal widths
 
 % Set Oparational Params
-fsw = 80*10^6;
+fsw = 100*10^6;
 
 %%
 
@@ -103,6 +103,7 @@ for n = 1:numel(L_area)
 end
 
 %% Plots
+%{
 figure(1)
 surf(LA,NW*10^6,Efficiency)
 xlabel("Inductor Area (mm^2)")
@@ -116,6 +117,7 @@ zlim([0 20])
 xlabel("Inductor Area (mm^2)")
 ylabel("Switch Width (um)")
 title("FOM")
+%}
 
 figure(3)
 [C,h] = contourf(LA,NW*10^6,Efficiency,15);
