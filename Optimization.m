@@ -91,9 +91,9 @@ Efficiency = (1+(PLoss/Pout))^-1;
 
 FOM = PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
 
-fprintf("Inductor: " + L*10^9 + "nH, " + L_area_mm2 + "mm^2 \n") 
+fprintf("Inductor: " + L*10^9 + "nH, Area = " + L_area_mm2 + "mm^2, RDCR = " + Rdcr + "Ohm \n") 
 fprintf("Capacitor: " + Cout*10^9 + "nF, " + C_area_mm2 + "mm^2 \n")
-fprintf("Efficiency: " + Efficiency*100 + "%% \n")
+fprintf("Efficiency: " + Efficiency*100 + "%%, Expected Range: " + (1-(1 - Efficiency)*1.1)+ " - " +(1-(1 - Efficiency)*0.9)  + "%% \n")
 fprintf("FOM: " +FOM+ "\n")
 fprintf("Psw + Pdr = " + (Psw_n + Pdr_n + Psw_p + Pdr_p) + "W \n")
 
