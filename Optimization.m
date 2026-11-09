@@ -4,7 +4,7 @@ clear
 Vin = 1.8;
 Vout = 0.8;
 Iout = 1;
-CurrentRipple = 0.4;
+CurrentRipple = 1;
 VoltageRipple = 0.03;
 
 
@@ -25,6 +25,10 @@ PtoN_Width_Ratio = 1; % 1 for equal widths
 % Set Oparational Params
 fsw = 100*10^6;
 
+%% Select Parameters from Plots
+Select_LA_mm2 = 3; % Choose Inductor Area (mm^2)
+Select_SW_W_m = 0.05; % Choose switch Width (m);
+
 %%
 
 % Calculate extrapolated params
@@ -39,9 +43,66 @@ L = (Vout*(1-D))/(CurrentRipple*fsw);
 Cout = CurrentRipple/(8*VoltageRipple*fsw);
 C_area_mm2 = Cout/(100*10^-9);
 
-% Set up and run loop
-N_widths = linspace(10^-2,10^-1, 20);
-L_area = linspace(1,100, 20);
+%%
+W_n = Select_SW_W_m;
+L_area_mm2 = Select_LA_mm2;
+
+W_p = PtoN_Width_Ratio*W_n;
+
+Ron_n = UnitRon_n/(W_n/UnitW_n);
+
+Cgg_n = UnitCgg_n*(W_n/UnitW_n);
+Cgs_n = 0.5*Cgg_n;
+Cgd_n = 0.5*Cgg_n;
+Cds_n = 0.8*Cgg_n;
+Ciss_n = Cgd_n + Cgs_n;
+Coss_n = Cds_n + Cgd_n;
+
+Ron_p = UnitRon_p/(W_p/UnitW_p);
+Cgg_p = UnitCgg_p*(W_p/UnitW_p);
+Cgs_p = 0.5*Cgg_p;
+Cgd_p = 0.5*Cgg_p;
+Cds_p = 0.8*Cgg_p;
+Ciss_p = Cgd_p + Cgs_p;
+Coss_p = Cds_p + Cgd_p;
+
+N_area_mm2 = W_n*L_n*10^6;
+P_area_mm2 = W_p*L_p*10^6;
+
+Irms_n = sqrt((1-D)*(Ip*Iv + (1/3)*(Ip-Iv)^2));
+Irms_p = sqrt((D)*(Ip*Iv + (1/3)*(Ip-Iv)^2));
+Irms_L = sqrt(Ip^2 - Ip*CurrentRipple + (1/3)*CurrentRipple^2);
+
+Psw_n = Vin^2 * Coss_n * fsw;
+Pdr_n = Vsw^2 * Cgg_n * fsw;
+Pcond_n = Irms_n^2 * Ron_n;
+Ptot_n = Psw_n + Pdr_n + Pcond_n;
+
+Psw_p = Vin^2 * Coss_p * fsw;
+Pdr_p = Vsw^2 * Cgg_p * fsw;
+Pcond_p = Irms_p^2 * Ron_n;
+Ptot_p = Psw_p + Pdr_p + Pcond_p;
+
+Rdcr = (L/(4*10^-9))*(0.2/L_area_mm2);
+L_Loss = Irms_L^2 * Rdcr;
+PLoss = Ptot_n + Ptot_p + L_Loss;
+Pout = Vout*Iout;
+Efficiency = (1+(PLoss/Pout))^-1;
+
+FOM = PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
+
+fprintf("Inductor: " + L*10^9 + "nH, Area = " + L_area_mm2 + "mm^2, RDCR = " + Rdcr + "Ohm \n") 
+fprintf("Capacitor: " + Cout*10^9 + "nF, " + C_area_mm2 + "mm^2 \n")
+fprintf("Efficiency: " + Efficiency*100 + "%%, Expected Range: " + (1-(1 - Efficiency)*1.1)+ " - " +(1-(1 - Efficiency)*0.9)  + "%% \n")
+fprintf("FOM: " +FOM+ "\n")
+fprintf("Psw + Pdr = " + (Psw_n + Pdr_n + Psw_p + Pdr_p) + "W \n")
+
+
+
+
+%% Set up and run loop
+N_widths = linspace(10^-2,10^-1, 100);
+L_area = linspace(1,10, 100);
 
 [NW, LA] = meshgrid(N_widths, L_area);
 Efficiency = NW;
@@ -128,6 +189,9 @@ colormap('Jet')
 xlabel("Inductor Area (mm^2)")
 ylabel("Switch Width (um)")
 title("Efficiency")
+hold on
+plot(Select_LA_mm2,Select_SW_W_m*10^6, "w.", "MarkerSize",20)
+hold off
 
 figure(4)
 [C,h] = contourf(LA,NW*10^6,FOM,50);
@@ -140,10 +204,9 @@ colormap(flipud(jet))
 xlabel("Inductor Area (mm^2)")
 ylabel("Switch Width (um)")
 title("FOM")
-
-
-
-
+hold on
+plot(Select_LA_mm2,Select_SW_W_m*10^6, "w.", "MarkerSize",20)
+hold off
 
 
 
