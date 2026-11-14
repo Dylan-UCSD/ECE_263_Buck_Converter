@@ -9,11 +9,11 @@ VoltageRipple = 0.03;
 
 
 % Set Transistor Params
-UnitRon_n = 5.5;
+UnitRon_n = 6;
 UnitCgg_n = 120*10^-15;
 UnitW_n = 200*10^-6;
 
-UnitRon_p = 17.2;
+UnitRon_p = 21;
 UnitCgg_p = 79*10^-15;
 UnitW_p = 200*10^-6;
 
@@ -23,7 +23,7 @@ L_p = 60*10^-9;
 PtoN_Width_Ratio = 1; % 1 for equal widths
 
 % Set Oparational Params
-fsw = 100*10^6;
+fsw = 120*10^6;
 
 %% Select Parameters from Plots
 Select_LA_mm2 = 3; % Choose Inductor Area (mm^2)
@@ -80,7 +80,7 @@ Ptot_n = Psw_n + Pdr_n + Pcond_n;
 
 Psw_p = Vin^2 * Coss_p * fsw;
 Pdr_p = Vsw^2 * Cgg_p * fsw;
-Pcond_p = Irms_p^2 * Ron_n;
+Pcond_p = Irms_p^2 * Ron_p;
 Ptot_p = Psw_p + Pdr_p + Pcond_p;
 
 Rdcr = (L/(4*10^-9))*(0.2/L_area_mm2);
@@ -91,17 +91,19 @@ Efficiency = (1+(PLoss/Pout))^-1;
 
 FOM = PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
 
-fprintf("Inductor: " + L*10^9 + "nH, Area = " + L_area_mm2 + "mm^2, RDCR = " + Rdcr + "Ohm \n") 
-fprintf("Capacitor: " + Cout*10^9 + "nF, " + C_area_mm2 + "mm^2 \n")
+fprintf("Inductor: " + L*10^9 + " nH, Area = " + L_area_mm2 + " mm^2, RDCR = " + Rdcr + " Ohm, I_RMS = " + Irms_L + " A \n") 
+fprintf("Capacitor: " + Cout*10^9 + " nF, " + C_area_mm2 + " mm^2 \n")
+fprintf("NMOS: Width = " + W_n * 10^6 + " um, Ron = " + Ron_n + " Ohms, I_RMS = " + Irms_n + " A, Pwr = " + Ron_n*Irms_n^2 + " W \n")
+fprintf("PMOS: Width = " + W_p * 10^6 + " um, Ron = " + Ron_p + " Ohms, I_RMS = " + Irms_p + " A, Pwr = " + Ron_p*Irms_p^2 + " W \n")
 fprintf("Efficiency: " + Efficiency*100 + "%%, Expected Range: " + (1-(1 - Efficiency)*1.1)+ " - " +(1-(1 - Efficiency)*0.9)  + "%% \n")
 fprintf("FOM: " +FOM+ "\n")
-fprintf("Psw + Pdr = " + (Psw_n + Pdr_n + Psw_p + Pdr_p) + "W \n")
+fprintf("Psw + Pdr = " + (Psw_n + Pdr_n + Psw_p + Pdr_p) + " W \n")
 
 
 
 
 %% Set up and run loop
-N_widths = linspace(10^-2,10^-1, 100);
+N_widths = linspace(10^-2,2*10^-1, 100);
 L_area = linspace(1,10, 100);
 
 [NW, LA] = meshgrid(N_widths, L_area);
@@ -148,7 +150,7 @@ for n = 1:numel(L_area)
         
         Psw_p = Vin^2 * Coss_p * fsw;
         Pdr_p = Vsw^2 * Cgg_p * fsw;
-        Pcond_p = Irms_p^2 * Ron_n;
+        Pcond_p = Irms_p^2 * Ron_p;
         Ptot_p = Psw_p + Pdr_p + Pcond_p;
 
         Rdcr = (L/(4*10^-9))*(0.2/L_area_mm2);
