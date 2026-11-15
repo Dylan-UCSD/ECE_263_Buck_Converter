@@ -23,11 +23,12 @@ L_p = 60*10^-9;
 PtoN_Width_Ratio = 2; % 1 for equal widths
 
 % Set Oparational Params
-fsw = 110*10^6;
+fsw = 80*10^6;
 
 %% Select Parameters from Plots
-Select_LA_mm2 = 2.6; % Choose Inductor Area (mm^2)
-Select_SW_W_m = 0.045; % Choose switch Width (m);
+Select_LA_mm2 = 6; % Choose Inductor Area (mm^2)
+Select_SW_W_m = 0.050; % Choose switch Width (m);
+Cout = 80*10^-9;
 
 %%
 
@@ -40,7 +41,7 @@ Irms_n = sqrt((1-D)*(Ip*Iv + (1/3)*(Ip-Iv)^2));
 Irms_p = sqrt((D)*(Ip*Iv + (1/3)*(Ip-Iv)^2));
 Irms_L = sqrt(Ip^2 - Ip*CurrentRipple + (1/3)*CurrentRipple^2);
 L = (Vout*(1-D))/(CurrentRipple*fsw);
-Cout = CurrentRipple/(8*VoltageRipple*fsw);
+%Cout = CurrentRipple/(8*VoltageRipple*fsw);
 C_area_mm2 = Cout/(100*10^-9);
 
 %%
@@ -88,11 +89,13 @@ L_Loss = Irms_L^2 * Rdcr;
 PLoss = Ptot_n + Ptot_p + L_Loss;
 Pout = Vout*Iout;
 Efficiency = (1+(PLoss/Pout))^-1;
+Area = 2*(N_area_mm2 + P_area_mm2) + 0.5*(L_area_mm2 + C_area_mm2);
 
 PL_conduction = Pcond_p + Pcond_n + Psw_n + + Psw_p + L_Loss;
 Eff_Conduction = (1+(PL_conduction/Pout))^-1;
 
-FOM = PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
+
+FOM = PLoss * Area; %PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
 
 fprintf("f_sw = " + fsw*10^-6 + " MHz \n" )
 fprintf("Inductor: " + L*10^9 + " nH, Area = " + L_area_mm2 + " mm^2, RDCR = " + Rdcr + " Ohm, I_RMS = " + Irms_L + " A \n") 
@@ -103,6 +106,9 @@ fprintf("Efficiency: " + Efficiency*100 + "%%, Expected Range: " + (1-(1 - Effic
 fprintf("Efficiency (Conduction and switching loss only): " + Eff_Conduction*100 + "%%, Expected Range: " + (1-(1 - Eff_Conduction)*1.1)*100+ " - " +(1-(1 - Eff_Conduction)*0.9)*100  + "%% \n")
 fprintf("FOM: " +FOM+ "\n")
 fprintf("Pdr = " + ( Pdr_n+ Pdr_p) + " W \n")
+
+figure(1)
+bar([N_area_mm2, P_area_mm2, L_area_mm2, C_area_mm2])
 
 
 
@@ -163,9 +169,9 @@ for n = 1:numel(L_area)
         PLoss = Ptot_n + Ptot_p + L_Loss;
         Pout = Vout*Iout;
         Efficiency(n,m) = (1+(PLoss/Pout))^-1;
+        Area = 2*(N_area_mm2 + P_area_mm2) + 0.5*(L_area_mm2 + C_area_mm2);
 
-        FOM(n,m) = PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
-
+        FOM(n,m) = PLoss * Area; %PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
 
     end
 end
