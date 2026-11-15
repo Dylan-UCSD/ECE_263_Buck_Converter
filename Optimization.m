@@ -23,11 +23,11 @@ L_p = 60*10^-9;
 PtoN_Width_Ratio = 2; % 1 for equal widths
 
 % Set Oparational Params
-fsw = 100*10^6;
+fsw = 110*10^6;
 
 %% Select Parameters from Plots
-Select_LA_mm2 = 3; % Choose Inductor Area (mm^2)
-Select_SW_W_m = 0.05; % Choose switch Width (m);
+Select_LA_mm2 = 2.6; % Choose Inductor Area (mm^2)
+Select_SW_W_m = 0.045; % Choose switch Width (m);
 
 %%
 
@@ -89,19 +89,20 @@ PLoss = Ptot_n + Ptot_p + L_Loss;
 Pout = Vout*Iout;
 Efficiency = (1+(PLoss/Pout))^-1;
 
-PL_conduction = Pcond_p + Pcond_n + Psw_n + L_Loss;
+PL_conduction = Pcond_p + Pcond_n + Psw_n + + Psw_p + L_Loss;
 Eff_Conduction = (1+(PL_conduction/Pout))^-1;
 
 FOM = PLoss*(N_area_mm2 + P_area_mm2 + L_area_mm2 + C_area_mm2);
 
+fprintf("f_sw = " + fsw*10^-6 + " MHz \n" )
 fprintf("Inductor: " + L*10^9 + " nH, Area = " + L_area_mm2 + " mm^2, RDCR = " + Rdcr + " Ohm, I_RMS = " + Irms_L + " A \n") 
 fprintf("Capacitor: " + Cout*10^9 + " nF, " + C_area_mm2 + " mm^2 \n")
 fprintf("NMOS: Width = " + W_n * 10^6 + " um, Ron = " + Ron_n + " Ohms, I_RMS = " + Irms_n + " A, Pwr = " + Ron_n*Irms_n^2 + " W \n")
 fprintf("PMOS: Width = " + W_p * 10^6 + " um, Ron = " + Ron_p + " Ohms, I_RMS = " + Irms_p + " A, Pwr = " + Ron_p*Irms_p^2 + " W \n")
 fprintf("Efficiency: " + Efficiency*100 + "%%, Expected Range: " + (1-(1 - Efficiency)*1.1)+ " - " +(1-(1 - Efficiency)*0.9)  + "%% \n")
-fprintf("Efficiency (Conduction and N switching loss only): " + Eff_Conduction*100 + "%%, Expected Range: " + (1-(1 - Eff_Conduction)*1.1)+ " - " +(1-(1 - Eff_Conduction)*0.9)  + "%% \n")
+fprintf("Efficiency (Conduction and switching loss only): " + Eff_Conduction*100 + "%%, Expected Range: " + (1-(1 - Eff_Conduction)*1.1)*100+ " - " +(1-(1 - Eff_Conduction)*0.9)*100  + "%% \n")
 fprintf("FOM: " +FOM+ "\n")
-fprintf("Psw + Pdr = " + (Psw_n + Pdr_n + Psw_p + Pdr_p) + " W \n")
+fprintf("Pdr = " + ( Pdr_n+ Pdr_p) + " W \n")
 
 
 
