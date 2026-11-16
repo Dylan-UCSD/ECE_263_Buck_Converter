@@ -1,4 +1,4 @@
-%% Gate driver design observations
+%% Gate driver design study
 
 clear; close all; clc
 
@@ -52,9 +52,15 @@ meas_fo8  = [5.58  117 121 57.7 45.1];
 meas_fo10 = [4.644 123 126 60.6 45.1];
 meas_fo14 = [3.66  141 145 58.6 45.4];
 meas_n6   = [4.288 NaN NaN NaN NaN];   % 6 stage, 50 pF
-% dylan's bench, 100 MHz (assumes 1u/2u unit inverter)
-meas_dylan_p    = [3.5  NaN NaN NaN NaN];   % PMOS driver only
-meas_dylan_both = [6.45 NaN NaN NaN NaN];   % both drivers
+% switch-loaded bench, 4-stage chain, 100 MHz (assumes 1u/2u unit inverter)
+meas_sw4_p    = [3.5  NaN NaN NaN NaN];   % PMOS driver only
+meas_sw4_both = [6.45 NaN NaN NaN NaN];   % both drivers
+tr_real       = 50e-12;                     % s, input rise time (50p on the pulse source)
+% own bench, 80 MHz, 50 ps edge, M1-M6 = 1 4 19 86 378 1667 (delay is input rising)
+Wm = [1; 4; 19; 86; 378; 1667];
+meas_m_p    = [2.864 108.0 NaN NaN NaN];   % PMOS driver
+meas_m_n    = [2.479 107.1 NaN NaN NaN];   % NMOS driver
+meas_m_both = [5.343 NaN   NaN NaN NaN];   % both drivers
 
 %% per-um values
 p.cn  = Cgg_n_unit / W_unit;    % F/um
@@ -76,8 +82,8 @@ fprintf('Gate switching alone, both drivers: %.2f mW at %.0f MHz, %.2f mW at %.0
 
 %% 1. validation
 tin_bench = 0.8 * 20e-12;    % s
-tin_dylan = 0.8 * 100e-12;   % s, tr = 100 ps
-cases = struct('name', {}, 'Wn', {}, 'Cl', {}, 'Cl2', {}, 'f', {}, 'tin', {}, 'meas', {});
+tin_sw4 = 0.8 * 100e-12;   % s, tr = 100 ps
+cases = struct('name', {}, 'Wn', {}, 'Cl', {}, 'Cl2', {}, 'f', {}, 'tin', {}, 'meas', {}, 'Wn2', {});
 nb = [8 10 14];
 mb = {meas_fo8, meas_fo10, meas_fo14};
 for j = 1:3
@@ -85,15 +91,22 @@ for j = 1:3
     Wl = (W_bench_total / nb(j)) / (1 + PN);
     tp = (Wl / W1_n)^(1/(nb(j) - 1));
     cases(end+1) = struct('name', sprintf('FO%d, %.1f pF, 80 MHz', nb(j), Cl*1e12), ...
-        'Wn', W1_n * tp.^((0:nb(j)-1)'), 'Cl', Cl, 'Cl2', 0, 'f', 80e6, 'tin', tin_bench, 'meas', mb{j}); %#ok<SAGROW>
+        'Wn', W1_n * tp.^((0:nb(j)-1)'), 'Cl', Cl, 'Cl2', 0, 'f', 80e6, 'tin', tin_bench, 'meas', mb{j}, 'Wn2', []); %#ok<SAGROW>
 end
 tp = (W_bench_total / 10 / (1 + PN) / W1_n)^(1/5);
 cases(end+1) = struct('name', 'N6, 50 pF, 80 MHz', 'Wn', W1_n * tp.^((0:5)'), ...
-    'Cl', 50e-12, 'Cl2', 0, 'f', 80e6, 'tin', tin_bench, 'meas', meas_n6);
-cases(end+1) = struct('name', 'dylan 4-stage, PMOS, 100 MHz', 'Wn', [1; 10; 100; 1000], ...
-    'Cl', C_p, 'Cl2', 0, 'f', 100e6, 'tin', tin_dylan, 'meas', meas_dylan_p);
-cases(end+1) = struct('name', 'dylan 4-stage, both, 100 MHz', 'Wn', [1; 10; 100; 1000], ...
-    'Cl', C_p, 'Cl2', C_n, 'f', 100e6, 'tin', tin_dylan, 'meas', meas_dylan_both);
+    'Cl', 50e-12, 'Cl2', 0, 'f', 80e6, 'tin', tin_bench, 'meas', meas_n6, 'Wn2', []);
+cases(end+1) = struct('name', '4-stage, PMOS, 100 MHz', 'Wn', [1; 10; 100; 1000], ...
+    'Cl', C_p, 'Cl2', 0, 'f', 100e6, 'tin', tin_sw4, 'meas', meas_sw4_p, 'Wn2', []);
+cases(end+1) = struct('name', '4-stage, both, 100 MHz', 'Wn', [1; 10; 100; 1000], ...
+    'Cl', C_p, 'Cl2', C_n, 'f', 100e6, 'tin', tin_sw4, 'meas', meas_sw4_both, 'Wn2', []);
+
+cases(end+1) = struct('name', 'M-chain, PMOS, 80 MHz', 'Wn', Wm, 'Cl', C_p, 'Cl2', 0, ...
+    'f', 80e6, 'tin', 0.8*tr_real, 'meas', meas_m_p, 'Wn2', []);
+cases(end+1) = struct('name', 'M-chain, NMOS, 80 MHz', 'Wn', Wm, 'Cl', C_n, 'Cl2', 0, ...
+    'f', 80e6, 'tin', 0.8*tr_real, 'meas', meas_m_n, 'Wn2', []);
+cases(end+1) = struct('name', 'M-chain, both, 80 MHz', 'Wn', Wm, 'Cl', C_n, 'Cl2', C_p, ...
+    'f', 80e6, 'tin', 0.8*tr_real, 'meas', meas_m_both, 'Wn2', Wm);
 nCase = numel(cases);
 
 qnames = {'power (mW)', 'delay up (ps)', 'delay dn (ps)', 'edge rise (ps)', 'edge fall (ps)'};
@@ -113,7 +126,7 @@ for c = 1:nCase
         end
     end
 end
-fprintf('Note: dylan rows use stage sizes 1/10/100/1000 times a 1 um / 2 um unit inverter (assumed), and were not used in the fit.\n');
+fprintf('Note: the 4-stage rows use stage sizes 1/10/100/1000 times a 1 um / 2 um unit inverter (assumed), and were not used in the fit.\n');
 
 %% 2. sweep
 nN = numel(N_list);  nF = numel(FO_last_list);
@@ -259,7 +272,7 @@ alt(2).label = 'N6, FO_{last} 28';
 alt(2).WN = design_widths(6, 28, C_n, W1_n, PN, p);  alt(2).WP = design_widths(6, 28, C_p, W1_n, PN, p);
 alt(3).label = 'N6, equal fan-out';
 alt(3).WN = design_widths(6, NaN, C_n, W1_n, PN, p); alt(3).WP = design_widths(6, NaN, C_p, W1_n, PN, p);
-alt(4).label = 'dylan 4-stage 1/10/100/1000';
+alt(4).label = '4-stage 1/10/100/1000';
 alt(4).WN = [1; 10; 100; 1000];  alt(4).WP = [1; 10; 100; 1000];
 fp = linspace(f_list(1), fmax, 13);
 Palt = zeros(numel(alt), 1);  Talt = zeros(numel(alt), 1);
@@ -304,8 +317,9 @@ legend('ideal (Cpar 1)', sprintf('calibrated (Cpar %.1f)', par_cal(1)), 'Locatio
 
 %% fig 4: ideal vs Cadence power
 figure('Name', 'Ideal vs Cadence', 'Position', [200 200 1100 450]);
-bar([Vi(:,1) Vc(:,1) Vm(:,1)]); grid on
-set(gca, 'XTick', 1:nCase, 'XTickLabel', {cases.name}); xtickangle(25)
+ip = find(~isnan(Vm(:,1)));           % cases with a measured power
+bar([Vi(ip,1) Vc(ip,1) Vm(ip,1)]); grid on
+set(gca, 'XTick', 1:numel(ip), 'XTickLabel', {cases(ip).name}); xtickangle(25)
 ylabel('Power (mW)'); legend('ideal model', 'calibrated model', 'Cadence', 'Location', 'northeast')
 title('Driver power: model vs Cadence')
 
@@ -362,7 +376,8 @@ function [v, P] = case_model(c, p, par, PN)
     m = chain_from_widths(c.Wn, PN, c.Cl, p, par);
     P = m.Ptotal * c.f / p.fsw;
     if c.Cl2 > 0
-        m2 = chain_from_widths(c.Wn, PN, c.Cl2, p, par);
+        W2 = c.Wn;  if ~isempty(c.Wn2), W2 = c.Wn2; end
+        m2 = chain_from_widths(W2, PN, c.Cl2, p, par);
         P = P + m2.Ptotal * c.f / p.fsw;
     end
     v = [P*1e3, m.T_inrise*1e12, m.T_infall*1e12, m.edge_rise*1e12, m.edge_fall*1e12];
